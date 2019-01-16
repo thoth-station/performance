@@ -18,3 +18,16 @@ URL to a raw script file. Use the URL to as the ``script`` parameter on Amun
 API (do not pass directly "non-raw" URL as Amun will download HTML page instead
 of raw file content).
 
+Writing a benchmark script
+==========================
+
+
+The benchmark script should be directly executable (e.g. ``python3
+script.py``), it can print additional information onto ``stderr`` in any form
+(this output is captured by Amun for additional analaysis). The output written
+onto ``stdout`` *has to be* in a JSON format with any keys and values the
+script wants to capture. To automatically submit results into Thoth's
+knowledge base, there is expected key ``performance_index`` key which value has
+to be from 0.0 to 1.0 inclusively. This number states how well the given
+application performs in the benchmark run.
+
