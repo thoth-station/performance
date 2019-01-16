@@ -88,4 +88,4 @@ Example local run
     }
   }
 
-Please note that the JSON file is printed to ``stdout``, other messages go to ``stderr``.
+Please note that the JSON output is printed to ``stdout``, other messages go to ``stderr``.
