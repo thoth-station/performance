@@ -74,8 +74,8 @@ def bench(n):
 
 def main():
     np.set_printoptions(suppress=True)
-    print("# Version: %s, path: %s\n" % (tf.__version__, tf.__path__), file=sys.stderr)
-    print("size,time,flop\n", file=sys.stderr)
+    print("# Version: %s, path: %s" % (tf.__version__, tf.__path__), file=sys.stderr)
+    print("size,time,flop", file=sys.stderr)
 
     result = {}
     for i in range(8, 15):  # [256 ... 16384]
