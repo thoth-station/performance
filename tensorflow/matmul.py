@@ -78,7 +78,7 @@ def main():
     print("size,time,flop", file=sys.stderr)
 
     result = {}
-    for i in range(8, 15):  # [256 ... 16384]
+    for i in range(8, 10):  # [256 ... 1024]
         n = 2 ** i
         rate, elapsed_ms = bench(n)
 
