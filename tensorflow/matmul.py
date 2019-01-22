@@ -44,6 +44,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 if _ARGS_DEVICE == 'cpu':
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
+
 def bench(n):
     tf.reset_default_graph()
     with tf.device("/%s:0" % (_ARGS_DEVICE)):
@@ -87,7 +88,13 @@ def main():
             "rate": rate
         }
 
+    result["@parameters"] = {
+        "dtype": _ARGS_DTYPE,
+        "device": _ARGS_DEVICE,
+        "reps": _ARGS_REPS
+    }
     json.dump(result, sys.stdout, indent=2)
+
 
 if __name__ == '__main__':
     main()
