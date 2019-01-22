@@ -51,7 +51,7 @@ def _get_aicoe_tensorflow_build_info():
     """Try to obtain information of AICoE TensorFlow builds.
 
     Do whatever is needed in this function, if there is an error, the reported build information is
-    set to None (e.g. TensorFlow is not installed and such).
+    set to None (e.g. AICoE TensorFlow is not installed and such).
     """
     try:
         path = os.path.dirname(os.path.dirname(tf.__file__))
