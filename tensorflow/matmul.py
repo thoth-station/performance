@@ -6,13 +6,15 @@
 # Additional changes for project Thoth by Thoth team.
 #
 
-import argparse
+import logging
 import os
 import sys
 import numpy as np
 import json
 import tensorflow as tf
 from timeit import time
+
+_LOGGER = logging.getLogger(__name__)
 
 
 # Datatype used.
@@ -43,6 +45,24 @@ print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 if _ARGS_DEVICE == 'cpu':
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
+
+def _get_aicoe_tensorflow_build_info():
+    """Try to obtain information of AICoE TensorFlow builds.
+
+    Do whatever is needed in this function, if there is an error, the reported build information is
+    set to None (e.g. TensorFlow is not installed and such).
+    """
+    try:
+        path = os.path.dirname(os.path.dirname(tf.__file__))
+        build_info_path = os.path.join(path, 'tensorflow-' + tf.__version__ + '.dist-info', 'build_info.json')
+        with open(build_info_path, 'r') as build_info_file:
+            build_info = json.load(build_info_file)
+        return build_info
+    except Exception:
+        _LOGGER.exception("Failed to obtain AICoE specific build information for TensorFlow")
+
+    return None
 
 
 def bench(n):
@@ -93,6 +113,7 @@ def main():
         "device": _ARGS_DEVICE,
         "reps": _ARGS_REPS
     }
+    result["tensorflow_buildinfo"] = _get_aicoe_tensorflow_build_info()
     json.dump(result, sys.stdout, indent=2)
 
 
