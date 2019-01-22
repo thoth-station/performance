@@ -36,7 +36,7 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 # Number of repetitions.
 # Options:
 #   A pozitive integer.
-_ARGS_REPS = int(os.getenv('MATMUL_REPS', 5))
+_ARGS_REPS = int(os.getenv('MATMUL_REPS', 10))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 
 
@@ -78,7 +78,7 @@ def main():
     print("size,time,flop", file=sys.stderr)
 
     result = {}
-    for i in range(8, 11):  # [256 ... 2048]
+    for i in range(8, 12):  # [256 ... 4096]
         n = 2 ** i
         rate, elapsed_ms = bench(n)
 
