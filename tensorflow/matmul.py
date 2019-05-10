@@ -38,9 +38,14 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 # Number of repetitions.
 # Options:
 #   A pozitive integer.
-_ARGS_REPS = int(os.getenv('MATMUL_REPS', 10))
+_ARGS_REPS = int(os.getenv('MATMUL_REPS', 200))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 
+# Size of matrix.
+# Options:
+#   A pozitive integer.
+_ARGS_MATRIX_SIZE = int(os.getenv('MATMUL_MATRIX_SIZE', 512))
+print("MATRIX size set to %s" % _ARGS_MATRIX_SIZE, file=sys.stderr)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 if _ARGS_DEVICE == 'cpu':
@@ -96,24 +101,22 @@ def bench(n):
 def main():
     np.set_printoptions(suppress=True)
     print("# Version: %s, path: %s" % (tf.__version__, tf.__path__), file=sys.stderr)
-    print("size,time,flop", file=sys.stderr)
 
-    result = {}
-    for i in range(8, 12):  # [256 ... 4096]
-        n = 2 ** i
-        rate, elapsed_ms = bench(n)
+    rate, elapsed = bench(_ARGS_MATRIX_SIZE)
 
-        result[str(n)] = {
-            "elapsed_ms": elapsed_ms,
-            "rate": rate
-        }
-
-    result["@parameters"] = {
-        "dtype": _ARGS_DTYPE,
-        "device": _ARGS_DEVICE,
-        "reps": _ARGS_REPS
+    result = {
+        "@parameters": {
+            "dtype": _ARGS_DTYPE,
+            "device": _ARGS_DEVICE,
+            "reps": _ARGS_REPS,
+            "matrix_size": _ARGS_MATRIX_SIZE,
+        },
+        "@result": {
+            "rate": rate,
+            "elapsed": elapsed,
+        },
+        "tensorflow_buildinfo": _get_aicoe_tensorflow_build_info()
     }
-    result["tensorflow_buildinfo"] = _get_aicoe_tensorflow_build_info()
     json.dump(result, sys.stdout, indent=2)
 
 
