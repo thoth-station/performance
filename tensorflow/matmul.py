@@ -38,7 +38,7 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 # Number of repetitions.
 # Options:
 #   A pozitive integer.
-_ARGS_REPS = int(os.getenv('MATMUL_REPS', 200))
+_ARGS_REPS = int(os.getenv('MATMUL_REPS', 20000))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 
 # Size of matrix.
@@ -90,7 +90,7 @@ def bench(n):
             times.append(time.time() - start)
 
     times_ms = 1000 * np.array(times)  # in seconds, convert to ms
-    elapsed_ms = np.median(times_ms)
+    elapsed_ms = np.sum(times_ms)
 
     ops = n ** 3 + (n - 1) * n ** 2  # n^2*(n-1) additions, n^3 multiplications
     rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
