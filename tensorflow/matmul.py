@@ -17,6 +17,14 @@ from timeit import time
 _LOGGER = logging.getLogger(__name__)
 
 
+# ML framework used.
+_ARGS_ML_FRAMEWORK = os.getenv('ML_FRAMEWORK', 'tensorflow')
+print("ML_FRAMEWORK set to %s" % _ARGS_ML_FRAMEWORK, file=sys.stderr)
+
+# Performance Indicator used.
+_ARGS_PI_NAME = os.getenv('PI', 'matmul')
+print("PI set to %s" % _ARGS_PI_NAME, file=sys.stderr)
+
 # Datatype used.
 # Options:
 #   float16
@@ -37,13 +45,13 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 
 # Number of repetitions.
 # Options:
-#   A pozitive integer.
+#   A positive integer.
 _ARGS_REPS = int(os.getenv('MATMUL_REPS', 20000))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 
 # Size of matrix.
 # Options:
-#   A pozitive integer.
+#   A positive integer.
 _ARGS_MATRIX_SIZE = int(os.getenv('MATMUL_MATRIX_SIZE', 512))
 print("MATRIX size set to %s" % _ARGS_MATRIX_SIZE, file=sys.stderr)
 
@@ -106,6 +114,8 @@ def main():
 
     result = {
         "@parameters": {
+            "framework": _ARGS_ML_FRAMEWORK,
+            "name": _ARGS_PI_NAME,
             "dtype": _ARGS_DTYPE,
             "device": _ARGS_DEVICE,
             "reps": _ARGS_REPS,
