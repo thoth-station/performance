@@ -24,7 +24,7 @@ Writing a performance script
 
 The performance script should be directly executable (e.g. ``python3
 script.py``), it can print additional information onto ``stderr`` in any form
-(this output is captured by Amun for additional analaysis). The output written
+(this output is captured by Amun for additional analysis). The output written
 onto ``stdout`` *has to be* in a JSON format with any keys and values the
 script wants to capture. To automatically submit results into Thoth's
 knowledge base, there is expected key ``performance_index`` key which value has

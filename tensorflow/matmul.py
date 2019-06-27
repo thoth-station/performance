@@ -37,13 +37,13 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 
 # Number of repetitions.
 # Options:
-#   A pozitive integer.
-_ARGS_REPS = int(os.getenv('MATMUL_REPS', 20000))
+#   A positive integer.
+_ARGS_REPS = int(os.getenv('MATMUL_REPS', 20))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 
 # Size of matrix.
 # Options:
-#   A pozitive integer.
+#   A positive integer.
 _ARGS_MATRIX_SIZE = int(os.getenv('MATMUL_MATRIX_SIZE', 512))
 print("MATRIX size set to %s" % _ARGS_MATRIX_SIZE, file=sys.stderr)
 
@@ -105,6 +105,8 @@ def main():
     rate, elapsed = bench(_ARGS_MATRIX_SIZE)
 
     result = {
+        "framework": "tensorflow",
+        "name": "matmul",
         "@parameters": {
             "dtype": _ARGS_DTYPE,
             "device": _ARGS_DEVICE,
