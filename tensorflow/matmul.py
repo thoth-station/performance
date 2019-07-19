@@ -106,7 +106,7 @@ def main():
 
     result = {
         "framework": "tensorflow",
-        "name": "matmul",
+        "name": "PiMatmul",
         "@parameters": {
             "dtype": _ARGS_DTYPE,
             "device": _ARGS_DEVICE,
