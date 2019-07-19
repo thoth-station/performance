@@ -80,8 +80,10 @@ Example local run
   WARNING:tensorflow:From /home/fpokorny/.local/share/virtualenvs/tensorflow-FigIdZQa/lib/python3.6/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
   Instructions for updating:
   Colocations handled automatically by placer.
-  512 x 512 matmul took:   	27366.3938 ms,	 0.01 GFLOPS
+  512 x 512 matmul took:   	1.2320 ms,	 217.67 GFLOPS
   {
+    "framework": "tensorflow",
+    "name": "PiMatmul",
     "@parameters": {
       "dtype": "float32",
       "device": "cpu",
@@ -89,8 +91,8 @@ Example local run
       "matrix_size": 512
     },
     "@result": {
-      "rate": 0.009799366109955314,
-      "elapsed": 27366.39380455017
+      "rate": 0.006877627136404815,
+      "elapsed": 38992.12718009949
     },
     "tensorflow_buildinfo": {
       "source_HEAD": "6612da89516247503f03ef76e974b51a434fb52e",
@@ -166,5 +168,8 @@ Example local run
 
 Please note that the JSON output is printed to ``stdout``, other messages go to
 ``stderr``. Key `tensorflow_buildinfo` is reported by the script, but is not
-part of the actual `@result`.
+part of the actual `@result`. TensorFlow's build information is parsed from
+custom AICoE TensorFlow builds present on `AICoE experimental index
+<http://tensorflow.pypi.thoth-station.ninja>`_.
+
 
