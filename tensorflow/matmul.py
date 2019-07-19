@@ -90,7 +90,7 @@ def bench(n):
             times.append(time.time() - start)
 
     times_ms = 1000 * np.array(times)  # in seconds, convert to ms
-    elapsed_ms = np.sum(times_ms)
+    elapsed_ms = np.median(times_ms)
 
     ops = n ** 3 + (n - 1) * n ** 2  # n^2*(n-1) additions, n^3 multiplications
     rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
