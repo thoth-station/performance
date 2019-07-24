@@ -240,6 +240,7 @@ def main():
             "filter_input_channels": _ARGS_F_INPUT_CHANNELS,
             "output_channels": _ARGS_OUTPUT_CHANNELS,
             "strides": _ARGS_STRIDES,
+            "padding": _ARGS_PADDING,
             "data_format": _ARGS_DATA_FORMAT,
         },
         "@result": {"rate": rate, "elapsed": elapsed},
