@@ -210,7 +210,7 @@ def main():
 
     result = {
         "framework": "tensorflow",
-        "name": "conv1d",
+        "name": "PiConv1D",
         "@parameters": {
             "dtype": _ARGS_DTYPE,
             "device": _ARGS_DEVICE,
