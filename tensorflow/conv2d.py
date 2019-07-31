@@ -238,7 +238,6 @@ def main():
             "input_channels": _ARGS_T_INPUT_CHANNELS,
             "filter_height": _ARGS_FILTER_HEIGHT,
             "filter_width": _ARGS_FILTER_WIDTH,
-            "filter_input_channels": _ARGS_F_INPUT_CHANNELS,
             "output_channels": _ARGS_OUTPUT_CHANNELS,
             "strides": _ARGS_STRIDES,
             "padding": _ARGS_PADDING,
