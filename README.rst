@@ -18,47 +18,9 @@ URL to a raw script file. Use the URL as the ``script`` parameter on Amun
 API (do not pass directly "non-raw" URL as Amun will download HTML page instead
 of raw file content).
 
-Writing a performance script
-============================
-
-The performance script should be directly executable (e.g. ``python3
-script.py``), it can print additional information onto ``stderr`` in any form
-(this output is captured by Amun for additional analysis). The output written
-onto ``stdout`` *has to be* in a JSON format with any keys and values the
-script wants to capture. To automatically submit results into Thoth's
-knowledge base, there is expected key ``overall_score`` key which value has
-to be from 0.0 to 1.0 inclusively. This number states how well the given
-application performs in the performance script run.
-
-The script *has to report* following information to stdout in a form of JSON which states following:
-
-* `@parameters` - parameters which define the given performance script (e.g. metrix size in case of matrix multiplication)
-* `@result` - the actual result which was obtained during the performance indicator run
-
-Example:
-
-.. code-block:: json
-
-  {
-    "@parameters": {
-      "dtype": "float32",
-      "device": "cpu",
-      "reps": 20000,
-      "matrix_size": 512
-    },
-    "@result": {
-      "rate": 0.009799366109955314,
-      "elapsed": 27366.39380455017
-    }
- }
-
-The related model on the graph database side should state `rate`, `elapsed`,
-`dtype`, `device`, `reps` and `matrix_size` properties to capture all the
-relevant info of the performance indicator run. This is done automatically by
-syncing logic once the `model is created
-<https://github.com/thoth-station/storages#creating-own-performance-indicators>`_
-and `graph schema is updated
-<https://github.com/thoth-station/storages#schema-adjustment-in-deployment>`_.
+Follow instructions present at
+`https://thoth-station.ninja/docs/developers/adviser/performance.html
+<https://thoth-station.ninja/docs/developers/adviser/performance.html>`_.
 
 Example local run
 =================
