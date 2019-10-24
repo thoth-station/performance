@@ -172,9 +172,9 @@ def bench(
         sess.run(convolution.op)
 
         for i in range(_ARGS_REPS):
-            start = time.time()
+            start = time.monotonic()
             sess.run(convolution.op)
-            times.append(time.time() - start)
+            times.append(time.monotonic() - start)
 
     times_ms = 1000 * np.array(times)  # in seconds, convert to ms
     elapsed_ms = np.median(times_ms)
