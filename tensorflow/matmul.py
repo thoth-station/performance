@@ -38,7 +38,7 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 # Number of repetitions.
 # Options:
 #   A positive integer.
-_ARGS_REPS = int(os.getenv('MATMUL_REPS', 20000))
+_ARGS_REPS = int(os.getenv('MATMUL_REPS', 2000))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 
 # Size of matrix.
@@ -85,9 +85,9 @@ def bench(n):
         sess.run(product.op)
 
         for i in range(_ARGS_REPS):
-            start = time.time()
+            start = time.monotonic()
             sess.run(product.op)
-            times.append(time.time() - start)
+            times.append(time.monotonic() - start)
 
     times_ms = 1000 * np.array(times)  # in seconds, convert to ms
     elapsed_ms = np.median(times_ms)
