@@ -17,6 +17,7 @@
 """Performance Indicator (PI): PyBench (Thoth Team)."""
 
 import sys
+import json
 import os
 from pybench.pybench import PyBenchCmdline
 
@@ -32,6 +33,15 @@ bench = PyBenchCmdline(
 )
 
 with open("output.json", "r") as output:
-    print(output.read(), file=original_stdout)
+    benchmarks = json.load(output)
 
+result = {
+    "test_suite": "pybench",
+    "name": "PiPyBench",
+    "@parameters": {
+        "rounds": _ARGS_ROUNDS,
+    },
+    "@result": benchmarks,
+}
+json.dump(result, original_stdout, indent=2)
 sys.exit(bench.exit_code)
