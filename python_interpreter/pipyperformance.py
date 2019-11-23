@@ -23,17 +23,28 @@ import json
 import subprocess
 from pathlib import Path
 
-from pyperformance.cli import main
+from pyperformance.cli import parse_args
+from pyperformance.cli_run import get_benchmarks_to_run
+from pyperformance.run import run_benchmarks
 
 _LOGGER = logging.getLogger(__name__)
 
 
-# pyperformance prints stats to stdout, we need to move them to stderr so that amun
-# reports back just reported JSON.
+def bench():
+    parser, options = parse_args()
+    bench_funcs, bench_groups, should_run = get_benchmarks_to_run(options)
+    cmd_prefix = [sys.executable]
+    suite, errors = run_benchmarks(bench_funcs, should_run, cmd_prefix, options)
+    suite.dump(options.output)
+
 original_stdout = sys.stdout
 sys.stdout = os.fdopen(os.dup(sys.stderr.fileno()), sys.stdout.mode)
-sys.argv.extend(["run", "--python=python3", "-o", "output.json"])
-bench = main()
+sys.argv.extend(["run", "--python=python3", "-o", "output.json", "-b", "sqlalchemy_declarative"])
+try:
+    bench()
+except SystemExit as exc:
+    if int(str(exc)) != 0:
+        print("pyperformance did not finish successfully: %d", int(exc), file=sys.stderr)
 
 with open("output.json", "r") as output:
     benchmarks = json.load(output)
@@ -46,5 +57,5 @@ result = {
 }
 
 json.dump(result, original_stdout, indent=2)
-sys.exit(bench.exit_code)
+sys.exit(0)
 
