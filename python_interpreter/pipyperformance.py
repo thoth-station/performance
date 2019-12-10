@@ -39,7 +39,7 @@ def bench():
 
 original_stdout = sys.stdout
 sys.stdout = os.fdopen(os.dup(sys.stderr.fileno()), sys.stdout.mode)
-sys.argv.extend(["run", "--python=python3", "-o", "output.json", "-b", "sqlalchemy_declarative"])
+sys.argv.extend(["run", "--python=python3", "-o", "output.json", "-b", "2n3"])
 try:
     bench()
 except SystemExit as exc:
