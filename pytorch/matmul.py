@@ -141,7 +141,7 @@ def main():
     rate, elapsed = bench(_ARGS_MATRIX_SIZE)
 
     result = {
-        "framework": "pytorch",
+        "library": "pytorch",
         "name": "PiMatmul",
         "@parameters": {
             "dtype": _ARGS_DTYPE,

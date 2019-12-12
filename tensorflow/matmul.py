@@ -105,7 +105,7 @@ def main():
     rate, elapsed = bench(_ARGS_MATRIX_SIZE)
 
     result = {
-        "framework": "tensorflow",
+        "library": "tensorflow",
         "name": "PiMatmul",
         "@parameters": {
             "dtype": _ARGS_DTYPE,
