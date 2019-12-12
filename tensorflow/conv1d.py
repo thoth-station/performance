@@ -209,7 +209,7 @@ def main():
     )
 
     result = {
-        "framework": "tensorflow",
+        "library": "tensorflow",
         "name": "PiConv1D",
         "@parameters": {
             "dtype": _ARGS_DTYPE,

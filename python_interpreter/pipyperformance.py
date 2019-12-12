@@ -50,7 +50,7 @@ with open("output.json", "r") as output:
     benchmarks = json.load(output)
 
 result = {
-    "test_suite": "performance",
+    "library": "performance",
     "name": "PiPyPerformance",
     "@parameters": {},
     "@result": benchmarks,
