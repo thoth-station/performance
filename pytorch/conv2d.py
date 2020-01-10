@@ -198,7 +198,7 @@ def main():
     )
 
     result = {
-        "library": "pytorch",
+        "component": "pytorch",
         "name": "PiConv2D",
         "@parameters": {
             "dtype": _ARGS_DTYPE,
@@ -213,7 +213,7 @@ def main():
             "output_channels": _ARGS_OUTPUT_CHANNELS,
             "strides": _ARGS_STRIDES,
             "padding": _ARGS_PADDING,
-            "data_format": "_ARGS_DATA_FORMAT",
+            "data_format": _ARGS_DATA_FORMAT,
         },
         "@result": {"rate": rate, "elapsed": elapsed},
         "pytorch_buildinfo": None,

@@ -199,7 +199,7 @@ def main():
     )
 
     result = {
-        "library": "pytorch",
+        "component": "pytorch",
         "name": "PiConv2D",
         "@parameters": {
             "dtype": _ARGS_DTYPE,

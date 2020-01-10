@@ -77,7 +77,6 @@ def bench(n):
         matrix2 = tf.Variable(tf.ones((n, n), dtype=_ARGS_DTYPE))
         product = tf.matmul(matrix1, matrix2)
 
-    times = []
     config = tf.ConfigProto()
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
@@ -105,7 +104,7 @@ def main():
     rate, elapsed = bench(_ARGS_MATRIX_SIZE)
 
     result = {
-        "library": "tensorflow",
+        "component": "tensorflow",
         "name": "PiMatmul",
         "@parameters": {
             "dtype": _ARGS_DTYPE,

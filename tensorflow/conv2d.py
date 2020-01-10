@@ -226,7 +226,7 @@ def main():
     )
 
     result = {
-        "library": "tensorflow",
+        "component": "tensorflow",
         "name": "PiConv2D",
         "@parameters": {
             "dtype": _ARGS_DTYPE,

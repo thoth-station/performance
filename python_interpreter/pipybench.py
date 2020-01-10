@@ -36,7 +36,7 @@ with open("output.json", "r") as output:
     benchmarks = json.load(output)
 
 result = {
-    "library": "pybench",
+    "component": "pybench",
     "name": "PiPyBench",
     "@parameters": {
         "rounds": _ARGS_ROUNDS
