@@ -115,8 +115,44 @@ def _get_aicoe_tensorflow_build_info():
 
     return None
 
+def create_initial_tensor(
+    batch: int,
+    tensor_input_height: int,
+    tensor_input_width: int,
+    tensor_input_channels: int,
+):
+    if _ARGS_DATA_FORMAT == "NHWC":
+        init_tensor = tf.Variable(
+            tf.ones(
+                [
+                    batch,
+                    tensor_input_height,
+                    tensor_input_width,
+                    tensor_input_channels,
+                ]
+            ),
+            dtype=_ARGS_DTYPE,
+        )
+        stride = [1] + [_ARGS_STRIDES, _ARGS_STRIDES] + [1]
+    elif _ARGS_DATA_FORMAT == "NCHW":
+        init_tensor = tf.Variable(
+            tf.ones(
+                [
+                    batch,
+                    tensor_input_channels,
+                    tensor_input_height,
+                    tensor_input_width,
+                ]
+            ),
+            dtype=_ARGS_DTYPE,
+        )
+        stride = [1, 1] + [_ARGS_STRIDES, _ARGS_STRIDES]
+    else:
+        raise ValueError("Unknown data_format: " + str(_ARGS_DATA_FORMAT))
 
-def bench(
+    return init_tensor, stride
+
+def bench_v1(
     batch: int,
     tensor_input_height: int,
     tensor_input_width: int,
@@ -124,39 +160,17 @@ def bench(
     filter_height: int,
     filter_width: int,
     filter_input_channels: int,
-    filter_output_channels: int,
+    filter_output_channels: int
 ):
-    g = tf.Graph()
-    with tf.device("/%s:0" % (_ARGS_DEVICE)) and g.as_default():
-        if _ARGS_DATA_FORMAT == "NHWC":
-            init_tensor = tf.Variable(
-                tf.ones(
-                    [
-                        batch,
-                        tensor_input_height,
-                        tensor_input_width,
-                        tensor_input_channels,
-                    ]
-                ),
-                dtype=_ARGS_DTYPE,
-            )
-            stride = [1] + [_ARGS_STRIDES, _ARGS_STRIDES] + [1]
-        elif _ARGS_DATA_FORMAT == "NCHW":
-            init_tensor = tf.Variable(
-                tf.ones(
-                    [
-                        batch,
-                        tensor_input_channels,
-                        tensor_input_height,
-                        tensor_input_width,
-                    ]
-                ),
-                dtype=_ARGS_DTYPE,
-            )
-            stride = [1, 1] + [_ARGS_STRIDES, _ARGS_STRIDES]
-        else:
-            raise ValueError("Unknown data_format: " + str(_ARGS_DATA_FORMAT))
-     
+    times = []
+    with tf.device("/%s:0" % (_ARGS_DEVICE)):
+        init_tensor, stride = create_initial_tensor(
+            batch=batch,
+            tensor_input_height=tensor_input_height,
+            tensor_input_width=tensor_input_width,
+            tensor_input_channels=tensor_input_channels
+        )
+
         init_filter = tf.Variable(
             tf.ones(
                 [
@@ -170,15 +184,14 @@ def bench(
         )
         convolution = tf.nn.conv2d(
             init_tensor,
-            filter=init_filter,
+            filters=init_filter,
             strides=stride,
             padding=_ARGS_PADDING,
             data_format=_ARGS_DATA_FORMAT,
         )
 
-    times = []
     config = tf.ConfigProto()
-    with tf.Session(graph=g, config=config) as sess:
+    with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         # warmup
         sess.run(convolution.op)
@@ -210,20 +223,97 @@ def bench(
     return rate, elapsed_ms
 
 
+def bench_v2(
+    batch: int,
+    tensor_input_height: int,
+    tensor_input_width: int,
+    tensor_input_channels: int,
+    filter_height: int,
+    filter_width: int,
+    filter_input_channels: int,
+    filter_output_channels: int
+):
+    times = []
+    with tf.device("/%s:0" % (_ARGS_DEVICE)):
+        init_tensor, stride = create_initial_tensor(
+            batch=batch,
+            tensor_input_height=tensor_input_height,
+            tensor_input_width=tensor_input_width,
+            tensor_input_channels=tensor_input_channels
+        )
+
+        init_filter = tf.Variable(
+            tf.ones(
+                [
+                    filter_height,
+                    filter_width,
+                    filter_input_channels,
+                    filter_output_channels,
+                ]
+            ),
+            dtype=_ARGS_DTYPE,
+        )
+
+        for i in range(_ARGS_REPS):
+            start = time.monotonic()
+            convolution = tf.nn.conv2d(
+                init_tensor,
+                filters=init_filter,
+                strides=stride,
+                padding=_ARGS_PADDING,
+                data_format=_ARGS_DATA_FORMAT,
+            )
+            times.append(time.monotonic() - start)
+
+    times_ms = 1000 * np.array(times)  # in seconds, convert to ms
+    elapsed_ms = np.median(times_ms)
+    # Source: https://github.com/tensorflow/tensorflow/blob/c19e29306ce1777456b2dbb3a14f511edf7883a8/tensorflow/python/profiler/internal/flops_registry.py#L381
+    # Formula:
+    #  batch_size * image_x_dim * image_y_dim * kernel_x_dim * kernel_y_dim
+    #  * input_depth * output_depth * 2 / (image_x_stride * image_x_stride)
+    ops = (
+        batch
+        * tensor_input_height
+        * tensor_input_width
+        * filter_height
+        * filter_width
+        * tensor_input_channels
+        * filter_output_channels
+        * 2
+    ) / (_ARGS_STRIDES * _ARGS_STRIDES)
+    rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
+    print('conv took:   \t%.4f ms,\t %.2f GFLOPS' % (elapsed_ms, rate), file=sys.stderr)
+
+    return rate, elapsed_ms
+
+
 def main():
     np.set_printoptions(suppress=True)
-    print("# Version: %s, path: %s" % (tf.__version__, tf.__path__), file=sys.stderr)
+    tf_version = tf.__version__
+    print("# Version: %s, path: %s" % (tf_version, tf.__path__), file=sys.stderr)
 
-    rate, elapsed = bench(
-        batch=_ARGS_BATCH,
-        tensor_input_height=_ARGS_INPUT_HEIGHT,
-        tensor_input_width=_ARGS_INPUT_WIDTH,
-        tensor_input_channels=_ARGS_T_INPUT_CHANNELS,
-        filter_height=_ARGS_FILTER_HEIGHT,
-        filter_width=_ARGS_FILTER_WIDTH,
-        filter_input_channels=_ARGS_F_INPUT_CHANNELS,
-        filter_output_channels=_ARGS_OUTPUT_CHANNELS
-    )
+    if int(tf_version[0]) >= 2:
+        rate, elapsed = bench_v2(
+            batch=_ARGS_BATCH,
+            tensor_input_height=_ARGS_INPUT_HEIGHT,
+            tensor_input_width=_ARGS_INPUT_WIDTH,
+            tensor_input_channels=_ARGS_T_INPUT_CHANNELS,
+            filter_height=_ARGS_FILTER_HEIGHT,
+            filter_width=_ARGS_FILTER_WIDTH,
+            filter_input_channels=_ARGS_F_INPUT_CHANNELS,
+            filter_output_channels=_ARGS_OUTPUT_CHANNELS
+        )
+    else:
+        rate, elapsed = bench_v1(
+            batch=_ARGS_BATCH,
+            tensor_input_height=_ARGS_INPUT_HEIGHT,
+            tensor_input_width=_ARGS_INPUT_WIDTH,
+            tensor_input_channels=_ARGS_T_INPUT_CHANNELS,
+            filter_height=_ARGS_FILTER_HEIGHT,
+            filter_width=_ARGS_FILTER_WIDTH,
+            filter_input_channels=_ARGS_F_INPUT_CHANNELS,
+            filter_output_channels=_ARGS_OUTPUT_CHANNELS
+        )
 
     result = {
         "component": "tensorflow",

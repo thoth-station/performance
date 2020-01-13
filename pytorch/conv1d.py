@@ -150,7 +150,11 @@ def bench(
     else:
         device = torch.device('cpu')
 
-    input_tensor = torch.ones((batch, tensor_input_channels, tensor_input_width), dtype=_ARGS_DTYPE_MAP[_ARGS_DTYPE]["dtype"], device=device)
+    input_tensor = torch.ones(
+        (batch, tensor_input_channels, tensor_input_width),
+        dtype=_ARGS_DTYPE_MAP[_ARGS_DTYPE]["dtype"],
+        device=device
+    )
 
     convolution = torch.nn.Conv1d(
         in_channels=tensor_input_channels,
