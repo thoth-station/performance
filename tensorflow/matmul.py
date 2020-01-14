@@ -70,7 +70,8 @@ def _get_aicoe_tensorflow_build_info():
     return None
 
 
-def bench(n):
+def bench_v1(n: int):
+    times = []
     tf.reset_default_graph()
     with tf.device("/%s:0" % (_ARGS_DEVICE)):
         matrix1 = tf.Variable(tf.ones((n, n), dtype=_ARGS_DTYPE))
@@ -97,11 +98,35 @@ def bench(n):
     return rate, elapsed_ms
 
 
+def bench_v2(n: int):
+    times = []
+    with tf.device("/%s:0" % (_ARGS_DEVICE)):
+        matrix1 = tf.Variable(tf.ones((n, n), dtype=_ARGS_DTYPE))
+        matrix2 = tf.Variable(tf.ones((n, n), dtype=_ARGS_DTYPE))
+
+        for i in range(_ARGS_REPS):
+            start = time.monotonic()
+            product = tf.matmul(matrix1, matrix2)
+            times.append(time.monotonic() - start)
+
+    times_ms = 1000 * np.array(times)  # in seconds, convert to ms
+    elapsed_ms = np.median(times_ms)
+
+    ops = n ** 3 + (n - 1) * n ** 2  # n^2*(n-1) additions, n^3 multiplications
+    rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
+    print('%d x %d matmul took:   \t%.4f ms,\t %.2f GFLOPS' % (n, n, elapsed_ms, rate,), file=sys.stderr)
+    return rate, elapsed_ms
+
+
 def main():
     np.set_printoptions(suppress=True)
-    print("# Version: %s, path: %s" % (tf.__version__, tf.__path__), file=sys.stderr)
+    tf_version = tf.__version__
+    print("# Version: %s, path: %s" % (tf_version, tf.__path__), file=sys.stderr)
 
-    rate, elapsed = bench(_ARGS_MATRIX_SIZE)
+    if int(tf_version[0]) >= 2:
+        rate, elapsed = bench_v2(_ARGS_MATRIX_SIZE)
+    else:
+        rate, elapsed = bench_v1(_ARGS_MATRIX_SIZE)
 
     result = {
         "component": "tensorflow",

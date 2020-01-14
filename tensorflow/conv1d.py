@@ -55,23 +55,23 @@ _ARGS_DATA_FORMAT = os.getenv("CONV_DATA_FORMAT", "NWC")
 print("CONV DATA FORMAT set to %s" % _ARGS_DATA_FORMAT, file=sys.stderr)
 
 # INPUT TENSOR
-_ARGS_BATCH = int(os.getenv("BATCH", 1))
+_ARGS_BATCH = int(os.getenv("BATCH", 4))
 print("BATCH set to %s" % _ARGS_BATCH, file=sys.stderr)
 
-_ARGS_INPUT_WIDTH = int(os.getenv("TENSOR_INPUT_WIDTH", 7))
+_ARGS_INPUT_WIDTH = int(os.getenv("TENSOR_INPUT_WIDTH", 161))
 print("TENSOR INPUT WIDTH set to %s" % _ARGS_INPUT_WIDTH, file=sys.stderr)
 
-_ARGS_T_INPUT_CHANNELS = int(os.getenv("TENSOR_INPUT_CHANNELS", 1))
+_ARGS_T_INPUT_CHANNELS = int(os.getenv("TENSOR_INPUT_CHANNELS", 5))
 print("TENSOR INPUT CHANNELS set to %s" % _ARGS_T_INPUT_CHANNELS, file=sys.stderr)
 
 # FILTER
-_ARGS_FILTER_WIDTH = int(os.getenv("FILTER_INPUT_WIDTH", 3))
+_ARGS_FILTER_WIDTH = int(os.getenv("FILTER_INPUT_WIDTH", 5))
 print("FILTER INPUT WIDTH set to %s" % _ARGS_FILTER_WIDTH, file=sys.stderr)
 
 _ARGS_F_INPUT_CHANNELS = int(os.getenv("FILTER_INPUT_CHANNELS", _ARGS_T_INPUT_CHANNELS))
 print("FILTER INPUT CHANNELS set to %s" % _ARGS_F_INPUT_CHANNELS, file=sys.stderr)
 
-_ARGS_OUTPUT_CHANNELS = int(os.getenv("FILTER_OUTPUT_CHANNELS", 1))
+_ARGS_OUTPUT_CHANNELS = int(os.getenv("FILTER_OUTPUT_CHANNELS", 32))
 print("FILTER OUTPUT CHANNELS set to %s" % _ARGS_OUTPUT_CHANNELS, file=sys.stderr)
 
 # Padding
@@ -110,42 +110,55 @@ def _get_aicoe_tensorflow_build_info():
 
     return None
 
+def create_initial_tensor(
+    batch: int,
+    tensor_input_width: int,
+    tensor_input_channels: int,
+):
+    if _ARGS_DATA_FORMAT == "NWC":
+        init_tensor = tf.Variable(
+            tf.ones(
+                [
+                    batch,
+                    tensor_input_width,
+                    tensor_input_channels,
+                ]
+            ),
+            dtype=_ARGS_DTYPE,
+        )
+    elif _ARGS_DATA_FORMAT == "NCW":
+        init_tensor = tf.Variable(
+            tf.ones(
+                [
+                    batch,
+                    tensor_input_channels,
+                    tensor_input_width,
+                ]
+            ),
+            dtype=_ARGS_DTYPE,
+        )
+    else:
+        raise ValueError("Unknown data_format: " + str(_ARGS_DATA_FORMAT))
 
-def bench(
+    return init_tensor
+
+
+def bench_v1(
     batch: int,
     tensor_input_width: int,
     tensor_input_channels: int,
     filter_width: int,
     filter_input_channels: int,
-    filter_output_channels: int,
+    filter_output_channels: int
 ):
-    g = tf.Graph()
-    with tf.device("/%s:0" % (_ARGS_DEVICE)) and g.as_default():
-        if _ARGS_DATA_FORMAT == "NWC":
-            init_tensor = tf.Variable(
-                tf.ones(
-                    [
-                        batch,
-                        tensor_input_width,
-                        tensor_input_channels,
-                    ]
-                ),
-                dtype=_ARGS_DTYPE,
+    times = []
+    tf.reset_default_graph()
+    with tf.device("/%s:0" % (_ARGS_DEVICE)):
+        init_tensor = create_initial_tensor(
+            batch=batch,
+            tensor_input_width=tensor_input_width,
+            tensor_input_channels=tensor_input_channels
             )
-        elif _ARGS_DATA_FORMAT == "NCW":
-            init_tensor = tf.Variable(
-                tf.ones(
-                    [
-                        batch,
-                        tensor_input_channels,
-                        tensor_input_width,
-                    ]
-                ),
-                dtype=_ARGS_DTYPE,
-            )
-        else:
-            raise ValueError("Unknown data_format: " + str(_ARGS_DATA_FORMAT))
-     
         init_filter = tf.Variable(
             tf.ones(
                 [
@@ -164,9 +177,8 @@ def bench(
             data_format=_ARGS_DATA_FORMAT,
         )
 
-    times = []
     config = tf.ConfigProto()
-    with tf.Session(graph=g, config=config) as sess:
+    with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         # warmup
         sess.run(convolution.op)
@@ -195,18 +207,87 @@ def bench(
     return rate, elapsed_ms
 
 
+def bench_v2(
+    batch: int,
+    tensor_input_width: int,
+    tensor_input_channels: int,
+    filter_width: int,
+    filter_input_channels: int,
+    filter_output_channels: int
+):
+    times = []
+    with tf.device("/%s:0" % (_ARGS_DEVICE)):
+        init_tensor = create_initial_tensor(
+            batch=batch,
+            tensor_input_width=tensor_input_width,
+            tensor_input_channels=tensor_input_channels
+            )
+        init_filter = tf.Variable(
+            tf.ones(
+                [
+                    filter_width,
+                    filter_input_channels,
+                    filter_output_channels,
+                ]
+            ),
+            dtype=_ARGS_DTYPE,
+        )
+
+    for i in range(_ARGS_REPS):
+        start = time.monotonic()
+        tf.nn.conv1d(
+            init_tensor,
+            filters=init_filter,
+            stride=_ARGS_STRIDE,
+            padding=_ARGS_PADDING,
+            data_format=_ARGS_DATA_FORMAT,
+        )
+        times.append(time.monotonic() - start)
+
+    times_ms = 1000 * np.array(times)  # in seconds, convert to ms
+    elapsed_ms = np.median(times_ms)
+    # Formula:
+    #  batch_size * x_dim * kernel_x_dim 
+    #  * input_depth * output_depth * 2 / (x_stride)
+    ops = (
+        batch
+        * tensor_input_width
+        * filter_width
+        * tensor_input_channels
+        * filter_output_channels
+        * 2
+    ) / (_ARGS_STRIDE)
+    rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
+    print('conv took:   \t%.4f ms,\t %.2f GFLOPS' % (elapsed_ms, rate), file=sys.stderr)
+
+    return rate, elapsed_ms
+
+
 def main():
     np.set_printoptions(suppress=True)
-    print("# Version: %s, path: %s" % (tf.__version__, tf.__path__), file=sys.stderr)
+    tf_version = tf.__version__
+    print("# Version: %s, path: %s" % (tf_version, tf.__path__), file=sys.stderr)
 
-    rate, elapsed = bench(
-        batch=_ARGS_BATCH,
-        tensor_input_width=_ARGS_INPUT_WIDTH,
-        tensor_input_channels=_ARGS_T_INPUT_CHANNELS,
-        filter_width=_ARGS_FILTER_WIDTH,
-        filter_input_channels=_ARGS_F_INPUT_CHANNELS,
-        filter_output_channels=_ARGS_OUTPUT_CHANNELS
-    )
+    if int(tf_version[0]) >= 2:
+        rate, elapsed = bench_v2(
+            batch=_ARGS_BATCH,
+            tensor_input_width=_ARGS_INPUT_WIDTH,
+            tensor_input_channels=_ARGS_T_INPUT_CHANNELS,
+            filter_width=_ARGS_FILTER_WIDTH,
+            filter_input_channels=_ARGS_F_INPUT_CHANNELS,
+            filter_output_channels=_ARGS_OUTPUT_CHANNELS,
+        )
+    else:
+        rate, elapsed = bench_v1(
+            batch=_ARGS_BATCH,
+            tensor_input_width=_ARGS_INPUT_WIDTH,
+            tensor_input_channels=_ARGS_T_INPUT_CHANNELS,
+            filter_width=_ARGS_FILTER_WIDTH,
+            filter_input_channels=_ARGS_F_INPUT_CHANNELS,
+            filter_output_channels=_ARGS_OUTPUT_CHANNELS,
+        )
+
+
 
     result = {
         "component": "tensorflow",
