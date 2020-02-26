@@ -134,6 +134,7 @@ def create_initial_tensor(
             dtype=_ARGS_DTYPE,
         )
         stride = [1] + [_ARGS_STRIDES, _ARGS_STRIDES] + [1]
+
     elif _ARGS_DATA_FORMAT == "NCHW":
         init_tensor = tf.Variable(
             tf.ones(
@@ -184,7 +185,7 @@ def bench_v1(
         )
         convolution = tf.nn.conv2d(
             init_tensor,
-            filters=init_filter,
+            filter=init_filter,
             strides=stride,
             padding=_ARGS_PADDING,
             data_format=_ARGS_DATA_FORMAT,
