@@ -95,7 +95,7 @@ print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
 # Size of matrix.
 # Options:
 #   A positive integer.
-_ARGS_MATRIX_SIZE = int(os.getenv('MATMUL_MATRIX_SIZE', 64))
+_ARGS_MATRIX_SIZE = int(os.getenv('MATMUL_MATRIX_SIZE', 512))
 print("MATRIX size set to %s" % _ARGS_MATRIX_SIZE, file=sys.stderr)
 
 if _ARGS_DEVICE == 'cpu':
