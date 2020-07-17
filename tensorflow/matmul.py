@@ -70,6 +70,14 @@ def _get_aicoe_tensorflow_build_info():
     return None
 
 
+def _get_tensorflow_build_info():
+    """Get tensorflow build info provided by tensorflow 2.3 and above."""
+    try:
+        return tf.sysconfig.get_build_info()
+    except AttributeError:
+        return None
+
+
 def bench_v1(n: int):
     times = []
     tf.reset_default_graph()
@@ -141,7 +149,8 @@ def main():
             "rate": rate,
             "elapsed": elapsed,
         },
-        "tensorflow_buildinfo": _get_aicoe_tensorflow_build_info()
+        "tensorflow_aicoe_buildinfo": _get_aicoe_tensorflow_build_info(),
+        "tensorflow_upstream_buildinfo": _get_tensorflow_build_info(),
     }
     json.dump(result, sys.stdout, indent=2)
 
