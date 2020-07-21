@@ -110,6 +110,15 @@ def _get_aicoe_tensorflow_build_info():
 
     return None
 
+
+def _get_tensorflow_build_info():
+    """Get tensorflow build info provided by tensorflow 2.3 and above."""
+    try:
+        return tf.sysconfig.get_build_info()
+    except AttributeError:
+        return None
+
+
 def create_initial_tensor(
     batch: int,
     tensor_input_width: int,
@@ -306,7 +315,8 @@ def main():
             "data_format": _ARGS_DATA_FORMAT,
         },
         "@result": {"rate": rate, "elapsed": elapsed},
-        "tensorflow_buildinfo": _get_aicoe_tensorflow_build_info(),
+        "tensorflow_aicoe_buildinfo": _get_aicoe_tensorflow_build_info(),
+        "tensorflow_upstream_buildinfo": _get_tensorflow_build_info(),
     }
     json.dump(result, sys.stdout, indent=2)
 

@@ -56,7 +56,8 @@ Example local run
       "rate": 0.006877627136404815,
       "elapsed": 38992.12718009949
     },
-    "tensorflow_buildinfo": {
+    "tensorflow_upstream_buildinfo": null,
+    "tensorflow_aicoe_buildinfo": {
       "source_HEAD": "6612da89516247503f03ef76e974b51a434fb52e",
       "source_remote_origin": "https://github.com/tensorflow/tensorflow.git",
       "OS_VER": "Fedora release 28 (Twenty Eight)",
