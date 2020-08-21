@@ -38,8 +38,14 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 # Number of repetitions.
 # Options:
 #   A positive integer.
-_ARGS_REPS = int(os.getenv('MATMUL_REPS', 2000))
+_ARGS_REPS = int(os.getenv('MATMUL_REPS', 50))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
+
+# Number of calls to the op per repetition.
+# Options:
+#   A positive integer.
+_ARGS_MINI_BATCH = int(os.getenv("MATMUL_MINI_BATCH", 40))
+print("MINI_BATCH set to %s" % _ARGS_MINI_BATCH, file=sys.stderr)
 
 # Size of matrix.
 # Options:
@@ -94,13 +100,14 @@ def bench_v1(n: int):
 
         for i in range(_ARGS_REPS):
             start = time.monotonic()
-            sess.run(product.op)
+            for j in range(_ARGS_MINI_BATCH):
+                sess.run(product.op)
             times.append(time.monotonic() - start)
 
     times_ms = 1000 * np.array(times)  # in seconds, convert to ms
     elapsed_ms = np.median(times_ms)
 
-    ops = n ** 3 + (n - 1) * n ** 2  # n^2*(n-1) additions, n^3 multiplications
+    ops = n ** 3 + (n - 1) * n ** 2 * _ARGS_MINI_BATCH  # n^2*(n-1) additions, n^3 multiplications
     rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
     print('%d x %d matmul took:   \t%.4f ms,\t %.2f GFLOPS' % (n, n, elapsed_ms, rate,), file=sys.stderr)
     return rate, elapsed_ms
@@ -114,13 +121,14 @@ def bench_v2(n: int):
 
         for i in range(_ARGS_REPS):
             start = time.monotonic()
-            product = tf.matmul(matrix1, matrix2)
+            for j in range(_ARGS_MINI_BATCH):
+                product = tf.matmul(matrix1, matrix2)
             times.append(time.monotonic() - start)
 
     times_ms = 1000 * np.array(times)  # in seconds, convert to ms
     elapsed_ms = np.median(times_ms)
 
-    ops = n ** 3 + (n - 1) * n ** 2  # n^2*(n-1) additions, n^3 multiplications
+    ops = n ** 3 + (n - 1) * n ** 2 * _ARGS_MINI_BATCH  # n^2*(n-1) additions, n^3 multiplications
     rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
     print('%d x %d matmul took:   \t%.4f ms,\t %.2f GFLOPS' % (n, n, elapsed_ms, rate,), file=sys.stderr)
     return rate, elapsed_ms
@@ -143,6 +151,7 @@ def main():
             "dtype": _ARGS_DTYPE,
             "device": _ARGS_DEVICE,
             "reps": _ARGS_REPS,
+            "mini_batch": _ARGS_MINI_BATCH,
             "matrix_size": _ARGS_MATRIX_SIZE,
         },
         "@result": {

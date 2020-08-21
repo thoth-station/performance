@@ -45,8 +45,14 @@ print("DEVICE set to %s" % _ARGS_DEVICE, file=sys.stderr)
 # Number of repetitions.
 # Options:
 #   A positive integer.
-_ARGS_REPS = int(os.getenv("CONV_REPS", 2000))
+_ARGS_REPS = int(os.getenv("CONV_REPS", 30))
 print("REPS set to %s" % _ARGS_REPS, file=sys.stderr)
+
+# Number of calls to the op per repetition.
+# Options:
+#   A positive integer.
+_ARGS_MINI_BATCH = int(os.getenv("CONV_MINI_BATCH", 100))
+print("MINI_BATCH set to %s" % _ARGS_MINI_BATCH, file=sys.stderr)
 
 # Data format
 # # Options:
@@ -208,7 +214,8 @@ def bench_v1(
 
         for i in range(_ARGS_REPS):
             start = time.monotonic()
-            sess.run(convolution.op)
+            for j in range(_ARGS_MINI_BATCH):
+                sess.run(convolution.op)
             times.append(time.monotonic() - start)
 
     times_ms = 1000 * np.array(times)  # in seconds, convert to ms
@@ -225,6 +232,7 @@ def bench_v1(
         * filter_width
         * tensor_input_channels
         * filter_output_channels
+        * _ARGS_MINI_BATCH
         * 2
     ) / (_ARGS_STRIDES * _ARGS_STRIDES)
     rate = ops / elapsed_ms / 10 ** 6  # in GFLOPS. (/ milli / 10**6) == (/ 10 ** 9)
@@ -332,6 +340,7 @@ def main():
             "dtype": _ARGS_DTYPE,
             "device": _ARGS_DEVICE,
             "reps": _ARGS_REPS,
+            "mini_batch": _ARGS_MINI_BATCH,
             "batch": _ARGS_BATCH,
             "input_height": _ARGS_INPUT_HEIGHT,
             "input_width": _ARGS_INPUT_WIDTH,
